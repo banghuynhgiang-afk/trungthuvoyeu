@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Băng Yêu Nguyệt v9 - Trung Thu</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--pink:#ff9bb3;--bubble:#ffe6f0;--gold:#ffd68a}
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;overflow:hidden;background:#000;color:#fff}
+  /* Mobile-friendly background: contain keeps whole face visible */
+  body{
+    background-image: url('497503851_2932322876956944_6434724683904574160_n.jpg');
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-position: center top;
+    background-color:#000;
+  }
+  /* overlay to reach ~60% dim */
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:0;pointer-events:none}
+  /* moon glow and lanterns */
+  .moon{position:fixed;left:6%;top:6%;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle at 30% 30%, rgba(255,240,200,0.18), rgba(255,230,150,0.06), transparent 50%);filter:blur(10px);z-index:1;pointer-events:none}
+  .lantern-left{position:fixed;left:6%;top:22%;width:46px;height:64px;border-radius:8px;background:linear-gradient(180deg,var(--gold),#ffb86b);z-index:1;filter:blur(0.6px);pointer-events:none}
+  .lantern-right{position:fixed;right:6%;top:30%;width:46px;height:64px;border-radius:8px;background:linear-gradient(180deg,#ffd7a6,#ff7fa1);z-index:1;pointer-events:none}
+
+  /* Main panel centered */
+  .stage{position:relative;z-index:2;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:18px}
+  .panel{width:100%;max-width:460px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));backdrop-filter:blur(6px);border-radius:18px;padding:12px;box-shadow:0 20px 60px rgba(0,0,0,0.6);position:relative;overflow:hidden}
+
+  .title{font-weight:700;text-align:center;margin:6px 0 12px;color:#fff}
+  /* chat area */
+  .chat{max-height:58vh;overflow:auto;padding:12px;display:flex;flex-direction:column;gap:12px;scroll-behavior:smooth}
+  .bubble{display:inline-block;max-width:78%;padding:10px 14px;border-radius:16px;line-height:1.35;animation:fadeIn .3s ease}
+  .bot{background:var(--bubble);color:#222;border-bottom-left-radius:6px;align-self:flex-start}
+  .user{background:var(--pink);color:#fff;align-self:flex-end;border-bottom-right-radius:6px}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+  /* input area */
+  .input-area{display:flex;gap:8px;padding:10px;border-top:1px solid rgba(255,255,255,0.04);background:transparent}
+  .input-area input{flex:1;padding:10px 12px;border-radius:999px;border:none;outline:none;background:rgba(255,255,255,0.03);color:#fff;font-size:15px}
+  .input-area button{padding:10px 14px;border-radius:999px;border:none;background:var(--pink);color:#fff;font-weight:700;cursor:pointer}
+
+  /* mailbox centered */
+  .mailbox{position:fixed;left:50%;top:46%;transform:translate(-50%,-50%);width:260px;background:linear-gradient(180deg,#fff,#fff);color:#111;padding:16px;border-radius:14px;box-shadow:0 12px 50px rgba(0,0,0,0.5);text-align:center;z-index:40;cursor:pointer}
+  .mailbox h3{margin:6px 0;font-size:18px}
+  .mailbox p{margin:0;color:#666;font-size:13px}
+
+  /* gift box */
+  .gift{position:fixed;left:50%;top:52%;transform:translate(-50%,-50%);width:160px;height:120px;background:linear-gradient(180deg,#ffdfe6,#ffb6c1);border-radius:12px;display:none;align-items:center;justify-content:center;box-shadow:0 14px 50px rgba(0,0,0,0.5);z-index:45;cursor:pointer}
+  .gift .ribbon{position:absolute;left:50%;top:22%;transform:translateX(-50%);width:120px;height:16px;background:var(--pink);border-radius:6px}
+
+  /* modal popup */
+  .modal-backdrop{position:fixed;inset:0;background:linear-gradient(rgba(0,0,0,0.6),rgba(0,0,0,0.6));display:flex;align-items:center;justify-content:center;z-index:70;visibility:hidden;opacity:0;transition:opacity .3s ease}
+  .modal{background:rgba(255,255,255,0.98);color:#222;padding:18px;border-radius:12px;max-width:520px;width:86%;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.4)}
+  .modal.show{visibility:visible;opacity:1}
+
+  /* final overlay */
+  .final-blur{position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter: blur(6px);display:flex;align-items:center;justify-content:center;z-index:100;visibility:hidden;opacity:0;transition:opacity .6s ease}
+  .final-blur.show{visibility:visible;opacity:1}
+  .final-text{max-width:760px;padding:28px;border-radius:12px;text-align:center;font-size:18px;color:#fff;line-height:1.6}
+
+  /* hearts layer & fireworks canvas */
+  .hearts{position:fixed;inset:0;pointer-events:none;z-index:30;overflow:hidden}
+  .heart{position:absolute;font-size:20px;opacity:0.95;animation:rise 5s linear forwards}
+  @keyframes rise{0%{transform:translateY(40vh) scale(1);opacity:1}100%{transform:translateY(-120vh) scale(0.6);opacity:0}}
+
+  canvas.fire{position:fixed;inset:0;z-index:28;pointer-events:none}
+  /* responsive tweaks */
+  @media (max-width:520px){
+    body{background-position: center top; background-size: contain;}
+    .panel{max-width:94%;padding:10px}
+    .mailbox{width:86%}
+    .gift{width:140px;height:100px}
+  }
+</style>
+</head>
+<body>
+  <div class="overlay" aria-hidden="true"></div>
+  <div class="moon" aria-hidden="true"></div>
+  <div class="lantern-left" aria-hidden="true"></div>
+  <div class="lantern-right" aria-hidden="true"></div>
+
+  <div class="stage" role="main">
+    <div class="panel" aria-live="polite">
+      <div class="title">Chúc mừng Trung Thu</div>
+      <div class="chat" id="chat" aria-label="Chat area" hidden></div>
+      <div class="input-area" id="inputArea" hidden>
+        <input id="textIn" placeholder="Gõ trả lời..." autocomplete="off" />
+        <button id="sendBtn">Gửi</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="mailbox" id="mailbox" role="button" aria-pressed="false">
+    <h3>💌 Vợ có thư mới từ Chồng nè!</h3>
+    <p>Nhấn để mở và nhận quà nhé 💖</p>
+  </div>
+
+  <div class="gift" id="gift" role="button" aria-pressed="false">
+    <div class="ribbon"></div>
+    <div style="font-size:32px;color:#fff;font-weight:700">🎁</div>
+  </div>
+
+  <div class="modal-backdrop" id="modal" role="dialog" aria-modal="true">
+    <div class="modal" id="modalContent">
+      <p style="font-size:18px;margin:0 0 8px">Vào được tới đây rồi á, đúng là Vợ yêu của ta!</p>
+      <p style="margin:0 0 10px">Quà đặc biệt là Chồng yêu của Vợ đây. kaka.<br>Vợ yêu Trung Thu vui vẻ nha! 🌕💗</p>
+      <button id="modalClose" style="margin-top:6px;padding:8px 12px;border-radius:10px;border:none;background:var(--pink);color:#fff;cursor:pointer">Đóng</button>
+    </div>
+  </div>
+
+  <div class="final-blur" id="finalBlur" aria-hidden="true">
+    <div class="final-text" id="finalText"></div>
+  </div>
+
+  <canvas id="fw" class="fire" aria-hidden="true"></canvas>
+  <div class="hearts" id="hearts"></div>
+
+  <audio id="bgm" preload="auto"></audio>
+
+<script>
+// Config
+const questions = [
+  { q: "Hôm nay là ngày gì nà?", ok: ["trung thu"] },
+  { q: "Trung thu Vợ muốn gặp ai nhất?", ok: ["băng","béo"] },
+  { q: "Vợ yêu Chồng nhiều hong?", ok: ["nhiều"] }
+];
+const successReplies = ["Vợ yêu hay vậy ta 💞","Kaka đúng rồi Vợ yêu ơi 😍","Vợ yêu nhà ai mà giỏi thế ta 💗"];
+
+// Elements
+const mailbox = document.getElementById('mailbox');
+const chat = document.getElementById('chat');
+const inputArea = document.getElementById('inputArea');
+const textIn = document.getElementById('textIn');
+const sendBtn = document.getElementById('sendBtn');
+const gift = document.getElementById('gift');
+const modal = document.getElementById('modal');
+const modalClose = document.getElementById('modalClose');
+const finalBlur = document.getElementById('finalBlur');
+const finalText = document.getElementById('finalText');
+const fwCanvas = document.getElementById('fw');
+const heartsLayer = document.getElementById('hearts');
+const bgm = document.getElementById('bgm');
+
+// Set audio src (file must be in same folder)
+bgm.src = "tet-trung-thu-le-hoi-truyen-thong-viet-nam-nhac-nen-trung-thu-2024-232619.mp3";
+bgm.loop = true;
+
+// chat flow
+let step = 0;
+let completed = false;
+
+function addBubble(text, who='bot'){
+  const el = document.createElement('div');
+  el.className = 'bubble ' + (who==='bot' ? 'bot' : 'user');
+  el.textContent = text;
+  chat.appendChild(el);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+mailbox.addEventListener('click', ()=>{
+  mailbox.style.display='none';
+  // show chat UI and start
+  chat.hidden = false;
+  inputArea.hidden = false;
+  addBubble("Chồng: " + questions[0].q, 'bot');
+  tryStartAudio();
+  startHearts();
+  startFireworks();
+});
+
+sendBtn.addEventListener('click', handleSend);
+textIn.addEventListener('keydown', (e)=>{ if(e.key==='Enter') handleSend(); });
+
+function handleSend(){
+  const val = textIn.value.trim();
+  if(!val) return;
+  addBubble(val, 'user');
+  textIn.value='';
+  checkAnswer(val.toLowerCase());
+}
+
+function checkAnswer(val){
+  const okList = questions[step].ok;
+  const matched = okList.some(k => val.includes(k));
+  if(matched){
+    setTimeout(()=>{
+      const r = successReplies[Math.floor(Math.random()*successReplies.length)];
+      addBubble(r, 'bot');
+      step++;
+      if(step < questions.length){
+        setTimeout(()=> addBubble("Chồng: " + questions[step].q, 'bot'), 800);
+      } else {
+        // all correct -> show gift
+        setTimeout(()=> showGift(), 800);
+      }
+    }, 500);
+  } else {
+    if(step===0) addBubble("Chồng: Hehe, nghĩ lại xem, có trăng tròn và bánh nè 🌕😋", 'bot');
+    else if(step===1) addBubble("Chồng: Ơ kìa, không phải người tròn tròn dễ thương kia sao 😝?", 'bot');
+    else if(step===2){
+      if(val.includes('ít')) addBubble("Chồng: Ít hả 😢 nghĩ kỹ lại nào Vợ ơiii 💗", 'bot');
+      else addBubble("Chồng: Sai mất rồi nà 😆", 'bot');
+    } else addBubble("Chồng: Sai rùi nà 😆", 'bot');
+  }
+}
+
+function showGift(){
+  gift.style.display='flex';
+  spawnHearts(12);
+  // gift click opens modal
+  gift.addEventListener('click', ()=>{
+    gift.style.display='none';
+    showModalThenFinal();
+  }, {once:true});
+}
+
+// modal + final sequence: popup 4s, then after 1s show final overlay
+function showModalThenFinal(){
+  modal.classList.add('show');
+  setTimeout(()=>{
+    modal.classList.remove('show');
+    modal.style.visibility='hidden';
+    modal.style.opacity=0;
+  }, 4000);
+  setTimeout(()=>{
+    finalText.innerHTML = `Nay trung thu mà Chồng yêu em bị covid rồi,<br>không ở bên Vợ được,<br>chúc Vợ ngày trung thu vui vẻ nhaaaa,<br>Chồng Giăng Băng yêu Vợ Trương Thị Nguyệt nhiều ❤`;
+    finalBlur.classList.add('show');
+    spawnHearts(30);
+  }, 5000); // 4s popup + 1s = 5s total
+}
+
+// hearts
+function spawnHearts(n=6){
+  for(let i=0;i<n;i++){
+    const h = document.createElement('div');
+    h.className='heart';
+    h.textContent = ['💖','❤️','💘'][Math.floor(Math.random()*3)];
+    h.style.left = (5 + Math.random()*90) + 'vw';
+    h.style.top = (50 + Math.random()*40) + 'vh';
+    h.style.fontSize = (14 + Math.random()*28) + 'px';
+    heartsLayer.appendChild(h);
+    setTimeout(()=> h.remove(), 7000);
+  }
+}
+let heartsInterval = null;
+function startHearts(){ if(heartsInterval) return; heartsInterval = setInterval(()=> spawnHearts(2), 1200); }
+
+// fireworks implementation
+function startFireworks(){
+  const canvas = fwCanvas;
+  const ctx = canvas.getContext('2d');
+  function fit(){ canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+  fit(); window.addEventListener('resize', fit);
+  const particles = [];
+  function burst(x,y){
+    const hues = [20,340,300,45,200];
+    const hue = hues[Math.floor(Math.random()*hues.length)];
+    const count = 40 + Math.floor(Math.random()*60);
+    for(let i=0;i<count;i++){
+      particles.push({
+        x, y,
+        vx: (Math.random()-0.5)*6,
+        vy: (Math.random()-0.8)*6,
+        life: 60 + Math.random()*60,
+        hue,
+        size: 1 + Math.random()*3
+      });
+    }
+  }
+  function tick(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    for(let i=particles.length-1;i>=0;i--){
+      const p = particles[i];
+      p.x += p.vx; p.y += p.vy; p.vy += 0.05; p.life--;
+      ctx.fillStyle = `hsla(${p.hue},90%,60%,${Math.max(p.life/100,0)})`;
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.size,0,Math.PI*2); ctx.fill();
+      if(p.life<=0) particles.splice(i,1);
+    }
+    requestAnimationFrame(tick);
+  }
+  // periodic bursts
+  setInterval(()=>{
+    const x = 100 + Math.random()*(canvas.width-200);
+    const y = 80 + Math.random()*(canvas.height/2);
+    burst(x,y);
+  }, 1200 + Math.random()*800);
+  tick();
+}
+
+// audio start on user interaction or mailbox click; mailbox triggers bgm.play()
+function tryStartAudio(){ 
+  if(!window.AudioContext) { bgm.play().catch(()=>{}); return; }
+  try{
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    const ctx = new AudioContext();
+    fetch(bgm.src).then(r=>r.arrayBuffer()).then(buf=>ctx.decodeAudioData(buf)).then(decoded=>{
+      const src = ctx.createBufferSource();
+      src.buffer = decoded;
+      src.loop = true;
+      const gain = ctx.createGain(); gain.gain.value = 0.18;
+      src.connect(gain).connect(ctx.destination);
+      src.start(0);
+    }).catch(()=>{ bgm.play().catch(()=>{}); });
+  }catch(e){ bgm.play().catch(()=>{}); }
+}
+
+// accessibility: close modal
+document.getElementById('modalClose').addEventListener('click', ()=>{
+  modal.classList.remove('show');
+  modal.style.visibility='hidden';
+  modal.style.opacity=0;
+  finalBlur.classList.add('show');
+});
+
+</script>
+</body>
+</html>
